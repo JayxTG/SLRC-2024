@@ -7,29 +7,29 @@ QTRSensors qtr;
 // [ -0.60, -0.52, -0.44, -0.36, -0.28, -0.20, -0.12, -0.04, 0.04, 0.12, 0.20, 0.28, 0.36, 0.44, 0.52, 0.60 ]
 //-0.60, -0.52, -0.44, -0.40, -0.32, -0.24, -0.18, -0.04, 0.04, 0.18, 0.24, 0.32, 0.40, 0.44, 0.52, 0.60
 const uint8_t SensorCount = 8;
-float sensorW[8] = { -1.38, -0.83, -0.44, -0.12, 0.12, 0.44, 0.83, 1.38 };
+float sensorW[8] = { -3.78, -2.58, -1.86, -0.8, 0.8, 1.86, 2.58, 3.78 };//-1.38, -0.83, -0.44, -0.12, 0.12, 0.44, 0.83, 1.38
 uint16_t sensorValues[SensorCount];
 double weightedVal[SensorCount];
 double dVal[SensorCount];
-double digital_thres = 500;
+double digital_thres = 400;
 
 double position = 0;
 double P, I, D, PID, PreErr = 0;
-double offset = 3;
+double offset = -6;
 
 double motorSpeedA;
 double motorSpeedB;
-double baseSpeed = 60;
-double Kp = 0.7; //1.1
-double Kd = 1.9;
+double baseSpeed = 80;
+double Kp = 2.2; //1.1
+double Kd = 1.8;
 
-int enA = 10;
-int in1 = 8;
-int in2 = 9;
+int enA = 4;
+int in1 = 3;//3
+int in2 = 2;//2
 // motor two
 int enB = 5;
-int in3 = 7;
-int in4 = 6;
+int in3 = 6;//6
+int in4 = 7;//7
 
 bool linefollow=true;
 
@@ -45,7 +45,7 @@ void setup()
   pinMode(in4, OUTPUT);
 
   qtr.setTypeRC();
-  qtr.setSensorPins((const uint8_t[]){ 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46 }, SensorCount);
+  qtr.setSensorPins((const uint8_t[]){ 31, 32, 33, 34, 35, 36, 37, 38 }, SensorCount); //, 39, 40, 41, 42, 43, 44, 45, 46
   qtr.setEmitterPin(2);
 
   Serial.begin(9600);
@@ -127,7 +127,7 @@ void PID_control() {
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-  delay(50);
+  //delay(50);
 }
 
 void goForward(double forward_delay) {
@@ -137,12 +137,12 @@ void goForward(double forward_delay) {
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   // set speed to 200 out of possible range 0~255
-  analogWrite(enA, 70 + offset);
+  analogWrite(enA, 80 + offset);
   // turn on motor B
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
   // set speed to 200 out of possible range 0~255
-  analogWrite(enB, 70 - offset);
+  analogWrite(enB, 80 - offset);
   delay(forward_delay);
   // now change motor directions
 }
@@ -151,12 +151,12 @@ void TurnRight(double turn_delay){
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   // set speed to 200 out of possible range 0~255
-  analogWrite(enA, 70 + offset);
+  analogWrite(enA, 100 + offset);
   // turn on motor B
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
   // set speed to 200 out of possible range 0~255
-  analogWrite(enB, 70 - offset);
+  analogWrite(enB, 100 - offset);
   delay(turn_delay);
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
@@ -169,12 +169,12 @@ void TurnLeft(double turn_delay){
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   // set speed to 200 out of possible range 0~255
-  analogWrite(enA, 70 + offset);
+  analogWrite(enA, 100 + offset);
   // turn on motor B
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
   // set speed to 200 out of possible range 0~255
-  analogWrite(enB, 70 - offset);
+  analogWrite(enB, 100 - offset);
   delay(turn_delay);
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
@@ -192,8 +192,24 @@ void stop(){
 }
 
 void loop() {
-
     sensorRead();
-    delay(100);
+    //delay(100);
+   // goForward(500);
+     if (dVal[4] == 1 && dVal[5] == 1 && dVal[6] == 1 ){
+       goForward(600);  //Turn Left
+       TurnLeft(1450);
+     }else if (dVal[0] == 1 && dVal[1] == 1 && dVal[3]==1 ){ 
+       goForward(1200);  //Turn Right
+       TurnRight(1500);
+
+     }
+
+    else{
+    PID_control();
+    }
+    
+    
+    
+
 }
   
