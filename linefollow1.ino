@@ -13,6 +13,7 @@ double weightedVal[SensorCount];
 double dVal[SensorCount];
 double digital_thres = 400;
 
+
 double position = 0;
 double P, I, D, PID, PreErr = 0;
 double offset = -6;
@@ -30,6 +31,9 @@ int in2 = 2;//2
 int enB = 5;
 int in3 = 6;//6
 int in4 = 7;//7
+
+int left= 22;
+int right= 52;
 
 bool linefollow=true;
 
@@ -195,10 +199,10 @@ void loop() {
     sensorRead();
     //delay(100);
    // goForward(500);
-     if (dVal[4] == 1 && dVal[5] == 1 && dVal[6] == 1 ){
+     if (digitalread(left)==HIGH){
        goForward(600);  //Turn Left
        TurnLeft(1450);
-     }else if (dVal[0] == 1 && dVal[1] == 1 && dVal[3]==1 ){ 
+     }else if (digitalread(right)==HIGH ){ 
        goForward(1200);  //Turn Right
        TurnRight(1500);
 
@@ -206,6 +210,7 @@ void loop() {
 
     else{
     PID_control();
+
     }
     
     
