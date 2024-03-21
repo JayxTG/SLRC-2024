@@ -1,39 +1,50 @@
-#include <Wire.h> // Include the Wire library for I2C communication
+#include <Wire.h>
+#include <VL53L0X.h>
+#include <TCA9548.h>
 
-const int outPin = 0; // Change the outPin to 0 for I2C communication
+// Create a TCA9548 object with the I2C address 0x70
+TCA9548 multiplexer(0x70, &Wire);
+
+// Create a VL53L0X object
+VL53L0X sensor;
 
 void setup() {
-    Wire.begin(); // Initialize the I2C communication
-    
-    // Set the multiplexer control pins as outputs
-    pinMode(s0, OUTPUT);
-    pinMode(s1, OUTPUT);
-    pinMode(s2, OUTPUT);
-    pinMode(s3, OUTPUT);
-    
-    // Initialize the serial communication
-    Serial.begin(9600);
+  Serial.begin(9600);
+  Wire.begin();
+
+  // Initialize the multiplexer
+  multiplexer.begin();
+
+  // Initialize the VL53L0X sensor on channel 0
+  multiplexer.selectChannel(0);
+  sensor.init();
+  sensor.setTimeout(500);  // Set timeout here
+  sensor.startContinuous(); // Start continuous ranging measurements
+
+  // Check if the sensor is correctly connected
+  if (!sensor.timeoutOccurred()) {
+    Serial.println("VL53L0X sensor initialized and correctly connected!");
+  } else {
+    Serial.println("Failed to initialize VL53L0X sensor!");
+    while (1);
+  }
 }
 
 void loop() {
-    // Iterate through all possible combinations of the multiplexer inputs
-    for (int i = 0; i < 16; i++) {
-        // Set the multiplexer control pins based on the current iteration
-        digitalWrite(s0, i & 0x01);
-        digitalWrite(s1, (i >> 1) & 0x01);
-        digitalWrite(s2, (i >> 2) & 0x01);
-        digitalWrite(s3, (i >> 3) & 0x01);
-        
-        // Read the value from the multiplexer output pin
-        int value = analogRead(outPin);
-        
-        // Print the value to the serial monitor
-        Serial.print("Input ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(value);
-        
-        // Delay for a short period of time
-        delay(100);
-    }
+  // Select the channel of the sensor
+  multiplexer.selectChannel(0);
+
+  // Read distance
+  uint16_t distance = sensor.readRangeContinuousMillimeters();
+
+  if (sensor.timeoutOccurred()) {
+    Serial.println("VL53L0X timeout!");
+  } else {
+    // Print distance
+    Serial.print("Distance: ");
+    Serial.print(distance);
+    Serial.println(" mm");
+  }
+
+delay(2000);
 }
