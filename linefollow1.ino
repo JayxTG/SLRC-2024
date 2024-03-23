@@ -20,9 +20,9 @@ double offset = -6;
 
 double motorSpeedA;
 double motorSpeedB;
-double baseSpeed = 80;
-double Kp = 2.2; //1.1
-double Kd = 1.8;
+double baseSpeed = 140;
+double Kp = 1.58; //1.1
+double Kd = 1.32;
 
 int enA = 4;
 int in1 = 3;//3
@@ -199,10 +199,10 @@ void loop() {
     sensorRead();
     //delay(100);
    // goForward(500);
-     if (digitalread(left)==HIGH){
+     if (digitalRead(left)==LOW){
        goForward(600);  //Turn Left
        TurnLeft(1450);
-     }else if (digitalread(right)==HIGH ){ 
+     }else if (digitalRead(right)==LOW ){ 
        goForward(1200);  //Turn Right
        TurnRight(1500);
 
