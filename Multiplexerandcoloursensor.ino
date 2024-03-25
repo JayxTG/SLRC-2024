@@ -1,12 +1,27 @@
 #include <Wire.h>
-#include <Adafruit_TCS34725.h>
+#include <VL53L0X.h>
 #include <TCA9548.h>
+#include "Adafruit_TCS34725.h"
+
+/* Connect SCL    to analog 5
+   Connect SDA    to analog 4
+   Connect VDD    to 3.3V DC
+   Connect GROUND to common ground */
+
+/* Initialise with default values (int time = 2.4ms, gain = 1x) */
+// Adafruit_TCS34725 tcs = Adafruit_TCS34725();
+
+/* Initialise with specific int time and gain values */
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_1X);
+
 
 // Create a TCA9548 object with the I2C address 0x70
 TCA9548 multiplexer(0x70, &Wire);
 
-// Create a TCS34725 object
-Adafruit_TCS34725 colorSensor;
+
+// Create two VL53L0X objects
+VL53L0X sensor1;
+VL53L0X sensor2;
 
 void setup() {
   Serial.begin(9600);
@@ -15,35 +30,84 @@ void setup() {
   // Initialize the multiplexer
   multiplexer.begin();
 
-  // Initialize the TCS34725 color sensor on channel 0
+  // Initialize the VL53L0X sensors on channels 0 and 2
   multiplexer.selectChannel(0);
+  sensor1.setAddress(0x29); // Set the correct I2C address for the sensor
+  sensor1.init();
+  sensor1.setTimeout(500);  // Set timeout here
+  sensor1.startContinuous(); // Start continuous ranging measurements
 
-  // Check if the sensor is correctly connected
-  if (colorSensor.begin()) {
-    Serial.println("TCS34725 color sensor initialized and correctly connected!");
+  multiplexer.selectChannel(2);
+  sensor2.setAddress(0x2A); // Set the correct I2C address for the sensor
+  sensor2.init();
+  sensor2.setTimeout(500);  // Set timeout here
+  sensor2.startContinuous(); // Start continuous ranging measurements
+
+  // Check if the sensors are correctly connected
+  multiplexer.selectChannel(1);
+  if (!sensor1.timeoutOccurred() && !sensor2.timeoutOccurred()) {
+    Serial.println("VL53L0X sensors initialized and correctly connected!");
   } else {
-    Serial.println("Failed to initialize TCS34725 color sensor!");
+    Serial.println("Failed to initialize VL53L0X sensors!");
     while (1);
   }
+
+  if (tcs.begin()) {
+    Serial.println("Found sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+    while (1);
+  }
+
 }
 
 void loop() {
-  // Select the channel of the sensor
+  //Select the channel of the first sensor
   multiplexer.selectChannel(0);
 
-  // Read color values
-  uint16_t red, green, blue, clear;
-  colorSensor.getRawData(&red, &green, &blue, &clear);
+  // Read distance from the first sensor
+  uint16_t distance1 = sensor1.readRangeContinuousMillimeters();
 
-  // Print color values
-  Serial.print("Red: ");
-  Serial.println(red);
-  Serial.print("Green: ");
-  Serial.println(green);
-  Serial.print("Blue: ");
-  Serial.println(blue);
-  Serial.print("Clear: ");
-  Serial.println(clear);
+  if (sensor1.timeoutOccurred()) {
+    Serial.println("VL53L0X timeout on channel 0!");
+  } else {
+    // Print distance from the first sensor
+    Serial.print("Distance 1: ");
+    Serial.print(distance1);
+    Serial.println(" mm");
+  }
 
+  // Select the channel of the second sensor
+  multiplexer.selectChannel(2);
+
+  // Read distance from the second sensor
+  uint16_t distance2 = sensor2.readRangeContinuousMillimeters();
+
+  if (sensor2.timeoutOccurred()) {
+    Serial.println("VL53L0X timeout on channel 2!");
+  } else {
+    // Print distance from the second sensor
+    Serial.print("Distance 2: ");
+    Serial.print(distance2);
+    Serial.println(" mm");
+  }
+
+  multiplexer.selectChannel(1);
   delay(2000);
+    uint16_t r, g, b, c, colorTemp, lux;
+
+  tcs.getRawData(&r, &g, &b, &c);
+  // colorTemp = tcs.calculateColorTemperature(r, g, b);
+  colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
+  lux = tcs.calculateLux(r, g, b);
+
+  Serial.print("Color Temp: "); Serial.print(colorTemp, DEC); Serial.print(" K - ");
+  Serial.print("Lux: "); Serial.print(lux, DEC); Serial.print(" - ");
+  Serial.print("R: "); Serial.print(r, DEC); Serial.print(" ");
+  Serial.print("G: "); Serial.print(g, DEC); Serial.print(" ");
+  Serial.print("B: "); Serial.print(b, DEC); Serial.print(" ");
+  Serial.print("C: "); Serial.print(c, DEC); Serial.print(" ");
+  Serial.println(" ");
+delay(100); 
+
 }
