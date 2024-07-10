@@ -1,6 +1,7 @@
 // connect motor controller pins to Arduino digital pins
 // motor one
 #include <QTRSensors.h>
+
 QTRSensors qtr;
 
 //[-60,-52,-44,-36,-28,-20,-12,-4,4,12,20,28,36,44,52,60]
@@ -195,23 +196,26 @@ void stop(){
 
 }
 
+void linefollow(){
+  sensorRead();
+  if (digitalRead(left)==LOW){
+    goForward(600);  //Turn Left
+    TurnLeft(1450);
+  }else if (digitalRead(right)==LOW ){ 
+    goForward(1200);  //Turn Right
+    TurnRight(1500);
+
+  }
+
+  else{
+  PID_control();
+
+  }
+}
+
 void loop() {
     sensorRead();
-    //delay(100);
-   // goForward(500);
-     if (digitalRead(left)==LOW){
-       goForward(600);  //Turn Left
-       TurnLeft(1450);
-     }else if (digitalRead(right)==LOW ){ 
-       goForward(1200);  //Turn Right
-       TurnRight(1500);
-
-     }
-
-    else{
-    PID_control();
-
-    }
+   if 
     
     
     
